@@ -1,6 +1,0 @@
-{
-    "programmer": "AVRISP mkII",
-    "board": "arduino:avr:uno",
-    "port": "/dev/ttyACM0",
-    "sketch": "code1/code1.ino"
-}

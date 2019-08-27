@@ -1,5 +1,6 @@
 // Simple piece of code to read serial 
 // port and turn LED/Pin13 On or Off:
+//#include "/home/liza/Downloads/arduino-1.8.9-linux64/arduino-1.8.9/hardware/arduino/avr/libraries/SoftwareSerial/SoftwareSerial"
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   // initialize serial port:
