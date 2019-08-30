@@ -1,9 +1,8 @@
 // Simple piece of code to implement a state machine 
 // port and turn LED/Pin13 On or Off:
 
-void updateStateMachie(void);
+void updateStateMachine(int);
 enum stateMachine {OFF, ON} state;
-
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -17,43 +16,66 @@ void loop() {
 
     if (Serial.available()) {
       int inByte = Serial.read();
-      switch (inByte)
-      {
-      case 'l':
-        // Turn LED/Pin13 On:
-        // digitalWrite(LED_BUILTIN, HIGH);
-        state = ON;
-        updateStateMachie;
-        break;
-      case 'd':
-        // Turn LED/Pin13 Off:
-        // digitalWrite(LED_BUILTIN, LOW);
-        state = OFF;
-        updateStateMachie;
-        break;
-    
-      default:
-        //Do nothing
-        break;
-      }
-
+      updateStateMachine(inByte);
     }
 
 }
 
-void updateStateMachie(void){
+void updateStateMachine(int cmd){
     switch (state)
     {
-    case ON:
-        digitalWrite(LED_BUILTIN, HIGH);
+      case ON:
+        switch (cmd)
+        {
+          case 'l':
+            Serial.println("Already turned on");
+            break;
+          case 'd':
+            state = OFF;
+            if (state == OFF){
+              digitalWrite(LED_BUILTIN, LOW);            
+              Serial.println("Turned off.");
+            }
+            else {
+              Serial.println("Couldn\'t turn off.");
+            }
+            break;
+          case 'o':
+            Serial.println(state);
+            break;             
+          default:
+            Serial.println("No valid command.");
+            break;
+        }
         break;
 
-    case OFF:
-        digitalWrite(LED_BUILTIN, LOW);
+      case OFF:
+        switch (cmd)
+        {
+          case 'd':
+            Serial.println("Already turned off.");
+            break;
+          case 'l':
+            state = ON;
+            if (state == ON){
+              digitalWrite(LED_BUILTIN, HIGH);            
+              Serial.println("Turned on.");
+            }
+            else {
+              Serial.println("Couldn\'t turn on.");
+            }
+            break;
+          case 'o':
+            Serial.println(state);
+            break;            
+          default:
+            Serial.println("No valid command.");
+            break;
+        }          
         break;
-    
-    default:
-        /* code */
+
+      default:
+        Serial.println("Fault!");
         break;
     }
 }
