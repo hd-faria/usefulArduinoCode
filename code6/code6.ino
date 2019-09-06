@@ -11,14 +11,14 @@
 
 //State
 struct state {
-    uint8_t reserved5    : 1;  
-    uint8_t reserved4    : 1;
-    uint8_t reserved3    : 1;
-    uint8_t reserved2    : 1;
-    uint8_t reserved1    : 1;
-    uint8_t reserved0    : 1;
-    uint8_t is_Ready     : 1;    
-    uint8_t is_Emergency : 1;
+    byte reserved5    : 1; // uint8_t  
+    byte reserved4    : 1; // uint8_t
+    byte reserved3    : 1; // uint8_t
+    byte reserved2    : 1; // uint8_t
+    byte reserved1    : 1; // uint8_t
+    byte reserved0    : 1; // uint8_t
+    byte is_Ready     : 1; // uint8_t    
+    byte is_Emergency : 1; // uint8_t
 } system_state;
 int last_current_measure;
 
@@ -40,8 +40,8 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
     pinMode(EMERGENCY_STOP_SSR, INPUT);
     pinMode(START_UP_SSR, OUTPUT);  
+    attachInterrupt(digitalPinToInterrupt(EMERGENCY_STOP_SSR), emergencyRelease, RISING);
     attachInterrupt(digitalPinToInterrupt(EMERGENCY_STOP_SSR), emergencyCall, FALLING);
-    attachInterrupt(digitalPinToInterrupt(EMERGENCY_STOP_SSR), emergencyCall, RISING);
     // initialize serial port:
     Serial.begin(9600);
     system_state.is_Ready=0;
@@ -66,15 +66,18 @@ void *ledOn(){
     digitalWrite(LED_BUILTIN, HIGH);
     interrupts();
 
-    // Reconsider if it`s convenient to report state here
-    Serial.print("Estado: 0b");
-    stateReport;
+    if (Serial.available()) {
+        // Reconsider if it`s convenient to report state here
+        stateReport;
+    }  
     
     // Select next state 
     if (!system_state.is_Emergency){
+        Serial.println("ledOn -> startingUp");
         return startingUp;
     }
     else {
+        Serial.println("ledOn -> stopped");
         return stopped;
     }
 }
@@ -86,23 +89,26 @@ void *ledOff(){
 
     delay(500);
 
-    // Reconsider if it`s convenient to report state here
-    Serial.print("Estado: 0b");
-    stateReport;
-  
+    if (Serial.available()) {
+        // Reconsider if it`s convenient to report state here        
+        stateReport;
+    } 
+    
+    Serial.println("ledOff -> ledOn");
     return ledOn;
 }
 
 void *startingUp(){
     // pre-check for emergency condition
     if(system_state.is_Emergency){
+        Serial.println("startingUp -> stopped(Emergency)");
         return stopped;
     }
     
     //Setups
     noInterrupts();
     last_current_measure = analogRead(ACS1);
-    if(last_current_measure < 512){
+    if((511<=last_current_measure)&&(last_current_measure < 516)){
         system_state.is_Ready = 1;
         }
     else{
@@ -111,23 +117,28 @@ void *startingUp(){
     interrupts();
 
     if(!system_state.is_Emergency && !system_state.is_Ready){
-        Serial.println("Starting up...");
-        Serial.println(last_current_measure);
+                
+        if (Serial.available()) {
+            Serial.println("Starting up...");
+            Serial.println(last_current_measure);
+            // Reconsider if it`s convenient to report state here
+            Serial.print("Estado: 0b");
+            stateReport;
+        } 
         
-        // Reconsider if it`s convenient to report state here
-        Serial.print("Estado: 0b");
-        stateReport;
-        
-        delay(100); // verify the minimum intervalbetween analog readings
+        delay(250); // verify the minimum intervalbetween analog readings
 
+        //Serial.println("startingUp -> startingUp");
         return startingUp;
     }
 
     if(!system_state.is_Emergency && system_state.is_Ready){
         digitalWrite(START_UP_SSR, HIGH);
+        Serial.println("startingUp -> running");
         return running;
     }
     else{ // safety
+        Serial.println("startingUp -> stopped(safety condition)");
         return stopped; 
     }    
 }
@@ -136,17 +147,24 @@ void *startingUp(){
 void *running(){
     // pre-check for emergency condition
     if(system_state.is_Emergency){
+            Serial.println("running -> stopped(Emergency)");
             return stopped;
         }
 
-    Serial.println("Running...");
-    Serial.print("Estado: 0b");
-    stateReport;
+    
+    if (Serial.available()) {
+        Serial.println("Running...");
+        // Reconsider if it`s convenient to report state here
+        Serial.print("Estado: 0b");
+        stateReport;
+    } 
 
     if(!system_state.is_Emergency && system_state.is_Ready){
+        //Serial.println("running -> running");
         return running;
     }
     else{ // Safety
+        Serial.println("running -> stopped(safety condition)");
         return stopped;
     }
 }
@@ -157,23 +175,34 @@ void *stopped(){
     digitalWrite(START_UP_SSR, LOW);
     interrupts();
 
-    Serial.println("Stopped!");
-    Serial.print("Estado: 0b");
-    stateReport;
+    if (Serial.available()) {
+        Serial.println("Stopped!");
+        // Reconsider if it`s convenient to report state here
+        Serial.print("Estado: 0b");
+        stateReport;
+    } 
+
     delay(500);    
 
     // next State
+    Serial.println("stopped -> ledOff");
     return ledOff;
 }
 
 // Not used, yet...
 void stateReport(){
-    Serial.print(system_state.reserved5);
-    Serial.print(system_state.reserved4);
-    Serial.print(system_state.reserved3);
-    Serial.print(system_state.reserved2);
-    Serial.print(system_state.reserved1);
-    Serial.print(system_state.reserved0);
-    Serial.print(system_state.is_Emergency);
-    Serial.println(system_state.is_Ready);    
+    while (Serial.available())
+    {
+        int trashbin = Serial.read();
+    }
+    
+    Serial.print("Estado: 0b");
+    Serial.print(int(system_state.reserved5));
+    Serial.print(int(system_state.reserved4));
+    Serial.print(int(system_state.reserved3));
+    Serial.print(int(system_state.reserved2));
+    Serial.print(int(system_state.reserved1));
+    Serial.print(int(system_state.reserved0));
+    Serial.print(int(system_state.is_Emergency));
+    Serial.println(int(system_state.is_Ready));    
 }
