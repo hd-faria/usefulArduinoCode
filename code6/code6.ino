@@ -113,7 +113,7 @@ void *startingUp(){
     //Setups
     noInterrupts();
     last_current_measure = analogRead(ACS1);
-    if((511<=last_current_measure)&&(last_current_measure < 516)){
+    if((495<=last_current_measure)&&(last_current_measure < 516)){ //calculado 511<=last_current_measure<516
         system_state.is_Ready = 1;
         }
     else{
