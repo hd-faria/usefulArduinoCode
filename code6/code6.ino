@@ -31,8 +31,10 @@ void *ledOff();  //Dummy state just to control arduino led
 void *startingUp();
 void *running();
 void *stopped();
+// Other functions
 void emergencyCall();
 void emergencyRelease();
+void stateReport();
 
 // State pointer
 StateFunc statefunc;
@@ -73,7 +75,7 @@ void *ledOn(){
 
     if(Serial.available()) {
         // Reconsider if it`s convenient to report state here
-        stateReport;
+        stateReport();
     }  
     
     // Select next state 
@@ -96,7 +98,7 @@ void *ledOff(){
 
     if (Serial.available()) {
         // Reconsider if it`s convenient to report state here        
-        stateReport;
+        stateReport();
     } 
     
     Serial.println("ledOff -> ledOn");
@@ -127,7 +129,7 @@ void *startingUp(){
             Serial.println("Starting up...");
             Serial.println(last_current_measure);
             // Reconsider if it`s convenient to report state here
-            stateReport;
+            stateReport();
         } 
         
         delay(250); // verify the minimum intervalbetween analog readings
@@ -159,7 +161,7 @@ void *stopped(){
     if(Serial.available()) {
         Serial.println("Stopped!");
         // Reconsider if it`s convenient to report state here
-        stateReport;
+        stateReport();
     } 
 
     delay(500);    
@@ -181,7 +183,7 @@ void *running(){
     if (Serial.available()) {
         Serial.println("Running...");
         // Reconsider if it`s convenient to report state here
-        stateReport;
+        stateReport();
     } 
 
     if(!system_state.is_Emergency && system_state.is_Ready){
